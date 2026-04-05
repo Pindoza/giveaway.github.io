@@ -1,21 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Code Unlock Game</title>
+    <title>Unlock Downloads</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="box">
-    <h2>🔐 Enter the Secret Code</h2>
+    <h2>🔐 Enter Code</h2>
     <input type="text" id="codeInput" placeholder="Type code here">
     <button onclick="checkCode()">Submit</button>
 
     <p id="result"></p>
 
-    <div id="reward" style="display:none; margin-top:20px;">
-        <h3>🎉 Code Accepted!</h3>
-        <button onclick="downloadFile()">⬇ Download Reward</button>
+    <div id="downloads" style="display:none; margin-top:20px;">
+        <h3>📦 Available Downloads:</h3>
+
+        <div class="item">
+            <span>🎮 Game Files</span>
+            <button onclick="downloadFile('files/game.zip')">Download</button>
+        </div>
+
+        <div class="item">
+            <span>🖼 Secret Image</span>
+            <button onclick="downloadFile('files/image.png')">Download</button>
+        </div>
+
+        <div class="item">
+            <span>🎵 Music Pack</span>
+            <button onclick="downloadFile('files/music.mp3')">Download</button>
+        </div>
+
     </div>
 </div>
 
@@ -25,22 +40,21 @@ const validCodes = ["1234", "secret", "unlock"];
 function checkCode() {
     let code = document.getElementById("codeInput").value;
     let result = document.getElementById("result");
-    let reward = document.getElementById("reward");
+    let downloads = document.getElementById("downloads");
 
     if (validCodes.includes(code)) {
         result.innerText = "ACCESS GRANTED 😎";
         result.style.color = "green";
-        reward.style.display = "block";
+        downloads.style.display = "block";
     } else {
         result.innerText = "WRONG CODE 💀";
         result.style.color = "red";
-        reward.style.display = "none";
+        downloads.style.display = "none";
     }
 }
 
-function downloadFile() {
-    // put your file in the repo (e.g. files/reward.zip)
-    window.location.href = "files/reward.zip";
+function downloadFile(path) {
+    window.location.href = path;
 }
 </script>
 
