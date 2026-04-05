@@ -58,11 +58,11 @@ function startHack() {
         if (validCodes.includes(code)) {
             stopBeep();
             document.getElementById("success").play();
-            typeText("ACCESS GRANTED 😎", result);
+            typeText("ACCESS - GRANTED ✅", result);
             downloads.style.display = "block";
         } else {
             stopBeep();
-            typeText("ACCESS DENIED 💀", result);
+            typeText("ACCESS - DENIED ❌", result);
         }
     }, 3000);
 }
