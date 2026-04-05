@@ -139,28 +139,57 @@ button:hover::after {
 }
 
 /* Glitch effect */
+/* FIXED glitch */
 .glitch {
     position: relative;
     font-size: 28px;
     font-weight: bold;
     color: white;
+    text-align: center;
 }
 
+/* hide overflow so ghosts don't leak */
 .glitch::before,
 .glitch::after {
     content: attr(data-text);
     position: absolute;
+    top: 0;
     left: 0;
+    width: 100%;
+    overflow: hidden;
 }
 
+/* red layer */
 .glitch::before {
     color: red;
+    z-index: -1;
     animation: glitchTop 1s infinite;
 }
 
+/* cyan layer */
 .glitch::after {
     color: cyan;
+    z-index: -2;
     animation: glitchBottom 1s infinite;
+}
+
+/* animations */
+@keyframes glitchTop {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, -2px); }
+    40% { transform: translate(-2px, 2px); }
+    60% { transform: translate(2px, -2px); }
+    80% { transform: translate(2px, 2px); }
+    100% { transform: translate(0); }
+}
+
+@keyframes glitchBottom {
+    0% { transform: translate(0); }
+    20% { transform: translate(2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-2px, 2px); }
+    80% { transform: translate(-2px, -2px); }
+    100% { transform: translate(0); }
 }
 
 @keyframes glitchTop {
