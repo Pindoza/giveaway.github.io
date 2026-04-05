@@ -1,10 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Site</title>
+    <title>Code Unlock</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Yo bro, my site is live 😎</h1>
-  <p>If you see this, it works.</p>
+
+<div class="box">
+    <h2>Enter Code</h2>
+    <input type="text" id="codeInput" placeholder="Type code here">
+    <button onclick="checkCode()">Submit</button>
+
+    <p id="result"></p>
+
+    <div id="secret" style="display:none;">
+        <h3>🎉 You unlocked the secret!</h3>
+        <p>GG bro 😎</p>
+    </div>
+</div>
+
+<script>
+const validCodes = ["1234", "secret", "admin"];
+
+function checkCode() {
+    let code = document.getElementById("codeInput").value;
+    let result = document.getElementById("result");
+    let secret = document.getElementById("secret");
+
+    if (validCodes.includes(code)) {
+        result.innerText = "ACCESS GRANTED 😎";
+        result.style.color = "green";
+        secret.style.display = "block";
+    } else {
+        result.innerText = "WRONG CODE 💀";
+        result.style.color = "red";
+        secret.style.display = "none";
+    }
+}
+</script>
+
 </body>
 </html>
