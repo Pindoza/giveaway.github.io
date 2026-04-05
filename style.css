@@ -137,3 +137,61 @@ button:hover::after {
 #downloads {
     animation: fadeIn 0.5s ease forwards;
 }
+
+/* Glitch effect */
+.glitch {
+    position: relative;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+}
+
+.glitch::before {
+    color: red;
+    animation: glitchTop 1s infinite;
+}
+
+.glitch::after {
+    color: cyan;
+    animation: glitchBottom 1s infinite;
+}
+
+@keyframes glitchTop {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, -2px); }
+    40% { transform: translate(-2px, 2px); }
+    60% { transform: translate(2px, -2px); }
+    80% { transform: translate(2px, 2px); }
+    100% { transform: translate(0); }
+}
+
+@keyframes glitchBottom {
+    0% { transform: translate(0); }
+    20% { transform: translate(2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-2px, 2px); }
+    80% { transform: translate(-2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+/* Typing text style */
+#typing {
+    color: #00ffcc;
+    margin-top: 10px;
+    font-family: monospace;
+}
+
+/* Result glow */
+#result {
+    font-size: 18px;
+    margin-top: 10px;
+    text-shadow: 0 0 10px #00ffcc;
+}
+
