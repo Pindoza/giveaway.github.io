@@ -76,8 +76,6 @@ class Particle {
 
         this.size = parseInt(sizeSlider.value);
         this.color = colorPicker.value;
-
-        this.life = 200 + Math.random() * 100;
     }
 
     update() {
@@ -85,8 +83,6 @@ class Particle {
 
         this.x += this.vx;
         this.y += this.vy;
-
-        this.life--;
 
         if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
         if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
@@ -114,20 +110,16 @@ function clearParticles() {
     particles = [];
 }
 
-// initial spawn so you SEE something immediately
+// initial spawn
 spawnParticles();
 
 function animate() {
     ctx.fillStyle = "rgba(15, 23, 42, 0.25)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    particles.forEach((p, index) => {
+    particles.forEach(p => {
         p.update();
         p.draw();
-
-        if (p.life <= 0) {
-            particles.splice(index, 1);
-        }
     });
 
     requestAnimationFrame(animate);
@@ -135,7 +127,6 @@ function animate() {
 
 animate();
 
-// resize fix
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
