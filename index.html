@@ -1,577 +1,572 @@
-diff --git a/index.html b/index.html
-index 817016f57a212a250cfd3c1c0ec53d56e854f328..9080dc7bc9c403178bb3ef48a0e68f1c1b8f9408 100644
---- a/index.html
-+++ b/index.html
-@@ -1,240 +1,332 @@
--<!DOCTYPE html>
--<html lang="en">
--<head>
--<meta charset="UTF-8">
--<title>Gravity Lab</title>
--
--<link rel="stylesheet" href="styles.css">
--</head>
--
--<body>
--
--<div id="stars"></div>
--
--<div id="unlockScreen">
--    <div id="unlockBox">
--        <h2>Enter Access Code</h2>
--        <input id="codeInput" placeholder="code">
--        <br><br>
--        <button onclick="checkCode()">Unlock</button>
--        <p id="status"></p>
--    </div>
--</div>
--
--<div id="ui">
--    <button onclick="spawnPlanet(true)">Planet + Moons</button>
--    <button onclick="spawnPlanet(false)">Planet (no moons)</button>
--    <button onclick="spawnBlackHole()">Black Hole</button>
--    <button onclick="clearBodies()">Clear</button>
--    <button onclick="running=!running">Start/Stop</button>
--</div>
--
--<canvas id="c"></canvas>
--
--<script>
--const canvas = document.getElementById("c");
--const ctx = canvas.getContext("2d");
--
--canvas.width = window.innerWidth;
--canvas.height = window.innerHeight;
--
--let running = true;
--let unlocked = false;
--
--const G = 0.2;
--
--/* -------- STARS -------- */
--function generateStars() {
--    const container = document.getElementById("stars");
--    for (let i = 0; i < 200; i++) {
--        let star = document.createElement("div");
--        star.className = "star";
--        star.style.left = Math.random() * 100 + "%";
--        star.style.top = Math.random() * 100 + "%";
--        star.style.opacity = Math.random();
--        container.appendChild(star);
--    }
--}
--generateStars();
--
--/* -------- BODY -------- */
--class Body {
--    constructor(x, y, vx, vy, mass, radius, type) {
--        this.x = x;
--        this.y = y;
--        this.vx = vx;
--        this.vy = vy;
--        this.mass = mass;
--        this.radius = radius;
--        this.type = type;
--    }
--
--    draw() {
--        ctx.beginPath();
--
--        if (this.type === "star") {
--            let grad = ctx.createRadialGradient(
--                this.x, this.y, 5,
--                this.x, this.y, 120
--            );
--            grad.addColorStop(0, "white");
--            grad.addColorStop(0.2, "yellow");
--            grad.addColorStop(1, "transparent");
--
--            ctx.fillStyle = grad;
--            ctx.shadowBlur = 50;
--            ctx.shadowColor = "yellow";
--        }
--        else if (this.type === "blackhole") {
--            ctx.fillStyle = "white";
--        }
--        else if (this.type === "planet") {
--            ctx.fillStyle = "blue";
--        }
--        else {
--            ctx.fillStyle = "gray";
--        }
--
--        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
--        ctx.fill();
--        ctx.shadowBlur = 0;
--    }
--}
--
--let bodies = [];
--
--let sun = new Body(canvas.width/2, canvas.height/2, 0, 0, 5000, 20, "star");
--bodies.push(sun);
--
--/* -------- GRAVITY -------- */
--function applyGravity(a, b) {
--    let dx = b.x - a.x;
--    let dy = b.y - a.y;
--    let dist = Math.sqrt(dx*dx + dy*dy) + 0.1;
--
--    let force = (G * a.mass * b.mass) / (dist * dist);
--
--    let fx = force * dx / dist;
--    let fy = force * dy / dist;
--
--    a.vx += fx / a.mass;
--    a.vy += fy / a.mass;
--}
--
--/* -------- MOON -------- */
--function createMoon(planet) {
--    let distance = 20 + Math.random() * 30;
--    let angle = Math.random() * Math.PI * 2;
--
--    let x = planet.x + Math.cos(angle) * distance;
--    let y = planet.y + Math.sin(angle) * distance;
--
--    let speed = Math.sqrt(G * planet.mass / distance);
--
--    let vx = -Math.sin(angle) * speed + planet.vx;
--    let vy = Math.cos(angle) * speed + planet.vy;
--
--    return new Body(x, y, vx, vy, 1, 2, "moon");
--}
--
--/* -------- PLANET -------- */
--function spawnPlanet(withMoons) {
--    let distance = 120 + Math.random() * 200;
--    let angle = Math.random() * Math.PI * 2;
--
--    let x = sun.x + Math.cos(angle) * distance;
--    let y = sun.y + Math.sin(angle) * distance;
--
--    let speed = Math.sqrt(G * sun.mass / distance);
--
--    let vx = -Math.sin(angle) * speed;
--    let vy = Math.cos(angle) * speed;
--
--    let planet = new Body(x, y, vx, vy, 8, 5, "planet");
--    bodies.push(planet);
--
--    if (withMoons) {
--        let moonCount = Math.floor(Math.random()*3)+1;
--        for (let i = 0; i < moonCount; i++) {
--            bodies.push(createMoon(planet));
--        }
--    }
--}
--
--/* -------- BLACK HOLE -------- */
--function spawnBlackHole() {
--    let x = Math.random() * canvas.width;
--    let y = Math.random() * canvas.height;
--
--    bodies.push(new Body(x,y,0,0,8000,10,"blackhole"));
--}
--
--/* -------- CLEAR -------- */
--function clearBodies() {
--    bodies = [sun];
--}
--
--/* -------- UPDATE -------- */
--function update() {
--    for (let i=0;i<bodies.length;i++){
--        for (let j=0;j<bodies.length;j++){
--            if(i!==j) applyGravity(bodies[i], bodies[j]);
--        }
--    }
--
--    bodies.forEach(b=>{
--        b.x += b.vx;
--        b.y += b.vy;
--    });
--}
--
--/* -------- DRAW -------- */
--function draw() {
--    ctx.clearRect(0,0,canvas.width,canvas.height);
--    bodies.forEach(b=>b.draw());
--}
--
--/* -------- LOOP -------- */
--function loop(){
--    if(unlocked && running) update();
--    draw();
--    requestAnimationFrame(loop);
--}
--loop();
--
--/* -------- UNLOCK SYSTEM -------- */
--async function hashCode(code){
--    const encoder = new TextEncoder();
--    const data = encoder.encode(code);
--    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
--    const hashArray = Array.from(new Uint8Array(hashBuffer));
--    return hashArray.map(b=>b.toString(16).padStart(2,"0")).join("");
--}
--
--/* PUT YOUR VALID HASHES HERE */
--const validHashes = [\
--    "1892495595a89843cea0de5ba646cd63b82ba418fb2ac76ab36adc880d2f61ff",
--    "0229d07fb8acc463d2f53e227fd5abe94e43d407635c819abaa37d947ac4cf86",
--];
--
--
--async function checkCode(){
--    let input = document.getElementById("codeInput").value.trim();
--    let hashed = await hashCode(input);
--
--    console.log("Input:", input);
--    console.log("Hash:", hashed);
--
--    if(validHashes.includes(hashed)){
--        unlocked = true;
--        document.getElementById("unlockScreen").style.display="none";
--        document.getElementById("ui").style.display="block";
--        document.getElementById("status").innerText = "Unlocked!";
--    } else {
--        document.getElementById("status").innerText = "Wrong code";
--    }
--}
--</script>
--
--</body>
--</html>
-+<!DOCTYPE html>
-+<html lang="en">
-+<head>
-+<meta charset="UTF-8">
-+<title>Gravity Lab</title>
-+
-+<link rel="stylesheet" href="styles.css">
-+</head>
-+
-+<body>
-+
-+<div id="stars"></div>
-+
-+<div id="unlockScreen">
-+    <div id="unlockBox">
-+        <h2>Enter Access Code</h2>
-+        <input id="codeInput" placeholder="code">
-+        <br><br>
-+        <button onclick="checkCode()">Unlock</button>
-+        <p id="status"></p>
-+    </div>
-+</div>
-+
-+<div id="ui">
-+    <div class="panelTitle">Solar Controls</div>
-+
-+    <div class="controlRow">
-+        <label for="planetSelect">Planet:</label>
-+        <select id="planetSelect">
-+            <option value="mercury">Mercury</option>
-+            <option value="venus">Venus</option>
-+            <option value="earth" selected>Earth</option>
-+            <option value="mars">Mars</option>
-+            <option value="jupiter">Jupiter</option>
-+            <option value="saturn">Saturn</option>
-+            <option value="uranus">Uranus</option>
-+            <option value="neptune">Neptune</option>
-+        </select>
-+    </div>
-+
-+    <div class="controlRow buttons">
-+        <button onclick="spawnSelectedPlanet(true)">Selected + Moons</button>
-+        <button onclick="spawnSelectedPlanet(false)">Selected (no moons)</button>
-+        <button onclick="spawnAllPlanets()">Spawn Full Solar Set</button>
-+    </div>
-+
-+    <div class="controlRow buttons">
-+        <button onclick="spawnBlackHole()">Black Hole</button>
-+        <button onclick="clearBodies()">Clear</button>
-+        <button onclick="running=!running">Start/Stop</button>
-+    </div>
-+</div>
-+
-+<canvas id="c"></canvas>
-+
-+<script>
-+const canvas = document.getElementById("c");
-+const ctx = canvas.getContext("2d");
-+
-+canvas.width = window.innerWidth;
-+canvas.height = window.innerHeight;
-+
-+let running = true;
-+let unlocked = false;
-+
-+const G = 0.2;
-+
-+const PLANET_MODELS = {
-+    mercury: { name: "Mercury", mass: 2.6, radius: 3, orbitalDistance: 90, color: "#9ca3af", accent: "#6b7280", moons: 0 },
-+    venus: { name: "Venus", mass: 4.8, radius: 4.5, orbitalDistance: 130, color: "#eab308", accent: "#f59e0b", moons: 0 },
-+    earth: { name: "Earth", mass: 8, radius: 5, orbitalDistance: 170, color: "#2563eb", accent: "#16a34a", moons: 1 },
-+    mars: { name: "Mars", mass: 4.2, radius: 4, orbitalDistance: 210, color: "#ef4444", accent: "#b91c1c", moons: 2 },
-+    jupiter: { name: "Jupiter", mass: 35, radius: 11, orbitalDistance: 270, color: "#d6a45f", accent: "#92400e", moons: 4 },
-+    saturn: { name: "Saturn", mass: 29, radius: 10, orbitalDistance: 330, color: "#f5deb3", accent: "#ca8a04", moons: 4, ring: true },
-+    uranus: { name: "Uranus", mass: 17, radius: 8, orbitalDistance: 390, color: "#67e8f9", accent: "#0ea5e9", moons: 3 },
-+    neptune: { name: "Neptune", mass: 18, radius: 8, orbitalDistance: 450, color: "#1d4ed8", accent: "#1e3a8a", moons: 3 }
-+};
-+
-+/* -------- STARS -------- */
-+function generateStars() {
-+    const container = document.getElementById("stars");
-+    for (let i = 0; i < 200; i++) {
-+        let star = document.createElement("div");
-+        star.className = "star";
-+        star.style.left = Math.random() * 100 + "%";
-+        star.style.top = Math.random() * 100 + "%";
-+        star.style.opacity = Math.random();
-+        container.appendChild(star);
-+    }
-+}
-+generateStars();
-+
-+/* -------- BODY -------- */
-+class Body {
-+    constructor(x, y, vx, vy, mass, radius, type, name = "", model = null) {
-+        this.x = x;
-+        this.y = y;
-+        this.vx = vx;
-+        this.vy = vy;
-+        this.mass = mass;
-+        this.radius = radius;
-+        this.type = type;
-+        this.name = name;
-+        this.model = model;
-+    }
-+
-+    draw() {
-+        if (this.type === "star") {
-+            ctx.beginPath();
-+            let grad = ctx.createRadialGradient(
-+                this.x, this.y, 5,
-+                this.x, this.y, 120
-+            );
-+            grad.addColorStop(0, "white");
-+            grad.addColorStop(0.2, "yellow");
-+            grad.addColorStop(1, "transparent");
-+
-+            ctx.fillStyle = grad;
-+            ctx.shadowBlur = 50;
-+            ctx.shadowColor = "yellow";
-+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-+            ctx.fill();
-+            ctx.shadowBlur = 0;
-+        }
-+        else if (this.type === "blackhole") {
-+            ctx.beginPath();
-+            ctx.fillStyle = "white";
-+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-+            ctx.fill();
-+        }
-+        else if (this.type === "planet") {
-+            this.drawPlanetModel();
-+        }
-+        else {
-+            ctx.beginPath();
-+            ctx.fillStyle = "#9ca3af";
-+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-+            ctx.fill();
-+        }
-+
-+        this.drawLabel();
-+    }
-+
-+    drawPlanetModel() {
-+        const primary = this.model?.color || "blue";
-+        const accent = this.model?.accent || "#ffffff";
-+
-+        ctx.beginPath();
-+        const planetGradient = ctx.createRadialGradient(
-+            this.x - this.radius * 0.3,
-+            this.y - this.radius * 0.35,
-+            Math.max(1, this.radius * 0.2),
-+            this.x,
-+            this.y,
-+            this.radius * 1.2
-+        );
-+        planetGradient.addColorStop(0, "#ffffff");
-+        planetGradient.addColorStop(0.2, primary);
-+        planetGradient.addColorStop(1, accent);
-+
-+        ctx.fillStyle = planetGradient;
-+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-+        ctx.fill();
-+
-+        if (this.model?.ring) {
-+            ctx.beginPath();
-+            ctx.strokeStyle = "rgba(245, 222, 179, 0.8)";
-+            ctx.lineWidth = 2;
-+            ctx.ellipse(this.x, this.y, this.radius * 1.8, this.radius * 0.7, Math.PI / 8, 0, Math.PI * 2);
-+            ctx.stroke();
-+        }
-+    }
-+
-+    drawLabel() {
-+        if (!this.name) return;
-+        ctx.font = "12px Arial";
-+        ctx.fillStyle = "rgba(255,255,255,0.9)";
-+        ctx.textAlign = "center";
-+        ctx.fillText(this.name, this.x, this.y - this.radius - 8);
-+    }
-+}
-+
-+let bodies = [];
-+
-+let sun = new Body(canvas.width/2, canvas.height/2, 0, 0, 5000, 20, "star", "Sun");
-+bodies.push(sun);
-+
-+/* -------- GRAVITY -------- */
-+function applyGravity(a, b) {
-+    let dx = b.x - a.x;
-+    let dy = b.y - a.y;
-+    let dist = Math.sqrt(dx*dx + dy*dy) + 0.1;
-+
-+    let force = (G * a.mass * b.mass) / (dist * dist);
-+
-+    let fx = force * dx / dist;
-+    let fy = force * dy / dist;
-+
-+    a.vx += fx / a.mass;
-+    a.vy += fy / a.mass;
-+}
-+
-+/* -------- MOON -------- */
-+function createMoon(planet, index = 1) {
-+    let distance = 20 + Math.random() * 30;
-+    let angle = Math.random() * Math.PI * 2;
-+
-+    let x = planet.x + Math.cos(angle) * distance;
-+    let y = planet.y + Math.sin(angle) * distance;
-+
-+    let speed = Math.sqrt(G * planet.mass / distance);
-+
-+    let vx = -Math.sin(angle) * speed + planet.vx;
-+    let vy = Math.cos(angle) * speed + planet.vy;
-+
-+    return new Body(x, y, vx, vy, 1, 2, "moon", `${planet.name} Moon ${index}`);
-+}
-+
-+/* -------- PLANET -------- */
-+function spawnPlanet(withMoons, planetKey = "earth") {
-+    const model = PLANET_MODELS[planetKey] || PLANET_MODELS.earth;
-+
-+    let distance = model.orbitalDistance + (Math.random() * 20 - 10);
-+    let angle = Math.random() * Math.PI * 2;
-+
-+    let x = sun.x + Math.cos(angle) * distance;
-+    let y = sun.y + Math.sin(angle) * distance;
-+
-+    let speed = Math.sqrt(G * sun.mass / distance);
-+
-+    let vx = -Math.sin(angle) * speed;
-+    let vy = Math.cos(angle) * speed;
-+
-+    let planet = new Body(x, y, vx, vy, model.mass, model.radius, "planet", model.name, model);
-+    bodies.push(planet);
-+
-+    if (withMoons) {
-+        let moonCount = Math.max(1, model.moons);
-+        for (let i = 0; i < moonCount; i++) {
-+            bodies.push(createMoon(planet, i + 1));
-+        }
-+    }
-+}
-+
-+function spawnSelectedPlanet(withMoons) {
-+    const selected = document.getElementById("planetSelect").value;
-+    spawnPlanet(withMoons, selected);
-+}
-+
-+function spawnAllPlanets() {
-+    Object.keys(PLANET_MODELS).forEach((planetKey) => {
-+        spawnPlanet(true, planetKey);
-+    });
-+}
-+
-+/* -------- BLACK HOLE -------- */
-+function spawnBlackHole() {
-+    let x = Math.random() * canvas.width;
-+    let y = Math.random() * canvas.height;
-+
-+    bodies.push(new Body(x,y,0,0,8000,10,"blackhole", "Black Hole"));
-+}
-+
-+/* -------- CLEAR -------- */
-+function clearBodies() {
-+    bodies = [sun];
-+}
-+
-+/* -------- UPDATE -------- */
-+function update() {
-+    for (let i=0;i<bodies.length;i++){
-+        for (let j=0;j<bodies.length;j++){
-+            if(i!==j) applyGravity(bodies[i], bodies[j]);
-+        }
-+    }
-+
-+    bodies.forEach(b=>{
-+        b.x += b.vx;
-+        b.y += b.vy;
-+    });
-+}
-+
-+/* -------- DRAW -------- */
-+function draw() {
-+    ctx.clearRect(0,0,canvas.width,canvas.height);
-+    bodies.forEach(b=>b.draw());
-+}
-+
-+/* -------- LOOP -------- */
-+function loop(){
-+    if(unlocked && running) update();
-+    draw();
-+    requestAnimationFrame(loop);
-+}
-+loop();
-+
-+/* -------- UNLOCK SYSTEM -------- */
-+async function hashCode(code){
-+    const encoder = new TextEncoder();
-+    const data = encoder.encode(code);
-+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-+    const hashArray = Array.from(new Uint8Array(hashBuffer));
-+    return hashArray.map(b=>b.toString(16).padStart(2,"0")).join("");
-+}
-+
-+/* PUT YOUR VALID HASHES HERE */
-+const validHashes = [\
-+    "1892495595a89843cea0de5ba646cd63b82ba418fb2ac76ab36adc880d2f61ff",
-+    "0229d07fb8acc463d2f53e227fd5abe94e43d407635c819abaa37d947ac4cf86",
-+];
-+
-+
-+async function checkCode(){
-+    let input = document.getElementById("codeInput").value.trim();
-+    let hashed = await hashCode(input);
-+
-+    console.log("Input:", input);
-+    console.log("Hash:", hashed);
-+
-+    if(validHashes.includes(hashed)){
-+        unlocked = true;
-+        document.getElementById("unlockScreen").style.display="none";
-+        document.getElementById("ui").style.display="block";
-+        document.getElementById("status").innerText = "Unlocked!";
-+    } else {
-+        document.getElementById("status").innerText = "Wrong code";
-+    }
-+}
-+</script>
-+
-+</body>
-+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gravity Lab</title>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div id="stars"></div>
+
+<div id="unlockScreen">
+    <div id="unlockBox">
+        <h2>Enter Access Code</h2>
+        <input id="codeInput" placeholder="code">
+        <br><br>
+        <button onclick="checkCode()">Unlock</button>
+        <p id="status"></p>
+    </div>
+</div>
+
+<div id="ui">
+    <button onclick="spawnPlanet(true)">Planet + Moons</button>
+    <button onclick="spawnPlanet(false)">Planet (no moons)</button>
+    <button onclick="spawnBlackHole()">Black Hole</button>
+    <button onclick="clearBodies()">Clear</button>
+    <button onclick="running=!running">Start/Stop</button>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let running = true;
+let unlocked = false;
+
+const G = 0.2;
+
+/* -------- STARS -------- */
+function generateStars() {
+    const container = document.getElementById("stars");
+    for (let i = 0; i < 200; i++) {
+        let star = document.createElement("div");
+        star.className = "star";
+        star.style.left = Math.random() * 100 + "%";
+        star.style.top = Math.random() * 100 + "%";
+        star.style.opacity = Math.random();
+        container.appendChild(star);
+    }
+}
+generateStars();
+
+/* -------- BODY -------- */
+class Body {
+    constructor(x, y, vx, vy, mass, radius, type) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.mass = mass;
+        this.radius = radius;
+        this.type = type;
+    }
+
+    draw() {
+        ctx.beginPath();
+
+        if (this.type === "star") {
+            let grad = ctx.createRadialGradient(
+                this.x, this.y, 5,
+                this.x, this.y, 120
+            );
+            grad.addColorStop(0, "white");
+            grad.addColorStop(0.2, "yellow");
+            grad.addColorStop(1, "transparent");
+
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 50;
+            ctx.shadowColor = "yellow";
+        }
+        else if (this.type === "blackhole") {
+            ctx.fillStyle = "white";
+        }
+        else if (this.type === "planet") {
+            ctx.fillStyle = "blue";
+        }
+        else {
+            ctx.fillStyle = "gray";
+        }
+
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
+let bodies = [];
+
+let sun = new Body(canvas.width/2, canvas.height/2, 0, 0, 5000, 20, "star");
+bodies.push(sun);
+
+/* -------- GRAVITY -------- */
+function applyGravity(a, b) {
+    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    let dist = Math.sqrt(dx*dx + dy*dy) + 0.1;
+
+    let force = (G * a.mass * b.mass) / (dist * dist);
+
+    let fx = force * dx / dist;
+    let fy = force * dy / dist;
+
+    a.vx += fx / a.mass;
+    a.vy += fy / a.mass;
+}
+
+/* -------- MOON -------- */
+function createMoon(planet) {
+    let distance = 20 + Math.random() * 30;
+    let angle = Math.random() * Math.PI * 2;
+
+    let x = planet.x + Math.cos(angle) * distance;
+    let y = planet.y + Math.sin(angle) * distance;
+
+    let speed = Math.sqrt(G * planet.mass / distance);
+
+    let vx = -Math.sin(angle) * speed + planet.vx;
+    let vy = Math.cos(angle) * speed + planet.vy;
+
+    return new Body(x, y, vx, vy, 1, 2, "moon");
+}
+
+/* -------- PLANET -------- */
+function spawnPlanet(withMoons) {
+    let distance = 120 + Math.random() * 200;
+    let angle = Math.random() * Math.PI * 2;
+
+    let x = sun.x + Math.cos(angle) * distance;
+    let y = sun.y + Math.sin(angle) * distance;
+
+    let speed = Math.sqrt(G * sun.mass / distance);
+
+    let vx = -Math.sin(angle) * speed;
+    let vy = Math.cos(angle) * speed;
+
+    let planet = new Body(x, y, vx, vy, 8, 5, "planet");
+    bodies.push(planet);
+
+    if (withMoons) {
+        let moonCount = Math.floor(Math.random()*3)+1;
+        for (let i = 0; i < moonCount; i++) {
+            bodies.push(createMoon(planet));
+        }
+    }
+}
+
+/* -------- BLACK HOLE -------- */
+function spawnBlackHole() {
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+
+    bodies.push(new Body(x,y,0,0,8000,10,"blackhole"));
+}
+
+/* -------- CLEAR -------- */
+function clearBodies() {
+    bodies = [sun];
+}
+
+/* -------- UPDATE -------- */
+function update() {
+    for (let i=0;i<bodies.length;i++){
+        for (let j=0;j<bodies.length;j++){
+            if(i!==j) applyGravity(bodies[i], bodies[j]);
+        }
+    }
+
+    bodies.forEach(b=>{
+        b.x += b.vx;
+        b.y += b.vy;
+    });
+}
+
+/* -------- DRAW -------- */
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    bodies.forEach(b=>b.draw());
+}
+
+/* -------- LOOP -------- */
+function loop(){
+    if(unlocked && running) update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+
+/* -------- UNLOCK SYSTEM -------- */
+async function hashCode(code){
+    const encoder = new TextEncoder();
+    const data = encoder.encode(code);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+/* PUT YOUR VALID HASHES HERE */
+const validHashes = [\
+    "1892495595a89843cea0de5ba646cd63b82ba418fb2ac76ab36adc880d2f61ff",
+    "0229d07fb8acc463d2f53e227fd5abe94e43d407635c819abaa37d947ac4cf86",
+];
+
+
+async function checkCode(){
+    let input = document.getElementById("codeInput").value.trim();
+    let hashed = await hashCode(input);
+
+    console.log("Input:", input);
+    console.log("Hash:", hashed);
+
+    if(validHashes.includes(hashed)){
+        unlocked = true;
+        document.getElementById("unlockScreen").style.display="none";
+        document.getElementById("ui").style.display="block";
+        document.getElementById("status").innerText = "Unlocked!";
+    } else {
+        document.getElementById("status").innerText = "Wrong code";
+    }
+}
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gravity Lab</title>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div id="stars"></div>
+
+<div id="unlockScreen">
+    <div id="unlockBox">
+        <h2>Enter Access Code</h2>
+        <input id="codeInput" placeholder="code">
+        <br><br>
+        <button onclick="checkCode()">Unlock</button>
+        <p id="status"></p>
+    </div>
+</div>
+
+<div id="ui">
+    <div class="panelTitle">Solar Controls</div>
+
+    <div class="controlRow">
+        <label for="planetSelect">Planet:</label>
+        <select id="planetSelect">
+            <option value="mercury">Mercury</option>
+            <option value="venus">Venus</option>
+            <option value="earth" selected>Earth</option>
+            <option value="mars">Mars</option>
+            <option value="jupiter">Jupiter</option>
+            <option value="saturn">Saturn</option>
+            <option value="uranus">Uranus</option>
+            <option value="neptune">Neptune</option>
+        </select>
+    </div>
+
+    <div class="controlRow buttons">
+        <button onclick="spawnSelectedPlanet(true)">Selected + Moons</button>
+        <button onclick="spawnSelectedPlanet(false)">Selected (no moons)</button>
+        <button onclick="spawnAllPlanets()">Spawn Full Solar Set</button>
+    </div>
+
+    <div class="controlRow buttons">
+        <button onclick="spawnBlackHole()">Black Hole</button>
+        <button onclick="clearBodies()">Clear</button>
+        <button onclick="running=!running">Start/Stop</button>
+    </div>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let running = true;
+let unlocked = false;
+
+const G = 0.2;
+
+const PLANET_MODELS = {
+    mercury: { name: "Mercury", mass: 2.6, radius: 3, orbitalDistance: 90, color: "#9ca3af", accent: "#6b7280", moons: 0 },
+    venus: { name: "Venus", mass: 4.8, radius: 4.5, orbitalDistance: 130, color: "#eab308", accent: "#f59e0b", moons: 0 },
+    earth: { name: "Earth", mass: 8, radius: 5, orbitalDistance: 170, color: "#2563eb", accent: "#16a34a", moons: 1 },
+    mars: { name: "Mars", mass: 4.2, radius: 4, orbitalDistance: 210, color: "#ef4444", accent: "#b91c1c", moons: 2 },
+    jupiter: { name: "Jupiter", mass: 35, radius: 11, orbitalDistance: 270, color: "#d6a45f", accent: "#92400e", moons: 4 },
+    saturn: { name: "Saturn", mass: 29, radius: 10, orbitalDistance: 330, color: "#f5deb3", accent: "#ca8a04", moons: 4, ring: true },
+    uranus: { name: "Uranus", mass: 17, radius: 8, orbitalDistance: 390, color: "#67e8f9", accent: "#0ea5e9", moons: 3 },
+    neptune: { name: "Neptune", mass: 18, radius: 8, orbitalDistance: 450, color: "#1d4ed8", accent: "#1e3a8a", moons: 3 }
+};
+
+/* -------- STARS -------- */
+function generateStars() {
+    const container = document.getElementById("stars");
+    for (let i = 0; i < 200; i++) {
+        let star = document.createElement("div");
+        star.className = "star";
+        star.style.left = Math.random() * 100 + "%";
+        star.style.top = Math.random() * 100 + "%";
+        star.style.opacity = Math.random();
+        container.appendChild(star);
+    }
+}
+generateStars();
+
+/* -------- BODY -------- */
+class Body {
+    constructor(x, y, vx, vy, mass, radius, type, name = "", model = null) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.mass = mass;
+        this.radius = radius;
+        this.type = type;
+        this.name = name;
+        this.model = model;
+    }
+
+    draw() {
+        if (this.type === "star") {
+            ctx.beginPath();
+            let grad = ctx.createRadialGradient(
+                this.x, this.y, 5,
+                this.x, this.y, 120
+            );
+            grad.addColorStop(0, "white");
+            grad.addColorStop(0.2, "yellow");
+            grad.addColorStop(1, "transparent");
+
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 50;
+            ctx.shadowColor = "yellow";
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+        else if (this.type === "blackhole") {
+            ctx.beginPath();
+            ctx.fillStyle = "white";
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        else if (this.type === "planet") {
+            this.drawPlanetModel();
+        }
+        else {
+            ctx.beginPath();
+            ctx.fillStyle = "#9ca3af";
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        this.drawLabel();
+    }
+
+    drawPlanetModel() {
+        const primary = this.model?.color || "blue";
+        const accent = this.model?.accent || "#ffffff";
+
+        ctx.beginPath();
+        const planetGradient = ctx.createRadialGradient(
+            this.x - this.radius * 0.3,
+            this.y - this.radius * 0.35,
+            Math.max(1, this.radius * 0.2),
+            this.x,
+            this.y,
+            this.radius * 1.2
+        );
+        planetGradient.addColorStop(0, "#ffffff");
+        planetGradient.addColorStop(0.2, primary);
+        planetGradient.addColorStop(1, accent);
+
+        ctx.fillStyle = planetGradient;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (this.model?.ring) {
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(245, 222, 179, 0.8)";
+            ctx.lineWidth = 2;
+            ctx.ellipse(this.x, this.y, this.radius * 1.8, this.radius * 0.7, Math.PI / 8, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    drawLabel() {
+        if (!this.name) return;
+        ctx.font = "12px Arial";
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.textAlign = "center";
+        ctx.fillText(this.name, this.x, this.y - this.radius - 8);
+    }
+}
+
+let bodies = [];
+
+let sun = new Body(canvas.width/2, canvas.height/2, 0, 0, 5000, 20, "star", "Sun");
+bodies.push(sun);
+
+/* -------- GRAVITY -------- */
+function applyGravity(a, b) {
+    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    let dist = Math.sqrt(dx*dx + dy*dy) + 0.1;
+
+    let force = (G * a.mass * b.mass) / (dist * dist);
+
+    let fx = force * dx / dist;
+    let fy = force * dy / dist;
+
+    a.vx += fx / a.mass;
+    a.vy += fy / a.mass;
+}
+
+/* -------- MOON -------- */
+function createMoon(planet, index = 1) {
+    let distance = 20 + Math.random() * 30;
+    let angle = Math.random() * Math.PI * 2;
+
+    let x = planet.x + Math.cos(angle) * distance;
+    let y = planet.y + Math.sin(angle) * distance;
+
+    let speed = Math.sqrt(G * planet.mass / distance);
+
+    let vx = -Math.sin(angle) * speed + planet.vx;
+    let vy = Math.cos(angle) * speed + planet.vy;
+
+    return new Body(x, y, vx, vy, 1, 2, "moon", `${planet.name} Moon ${index}`);
+}
+
+/* -------- PLANET -------- */
+function spawnPlanet(withMoons, planetKey = "earth") {
+    const model = PLANET_MODELS[planetKey] || PLANET_MODELS.earth;
+
+    let distance = model.orbitalDistance + (Math.random() * 20 - 10);
+    let angle = Math.random() * Math.PI * 2;
+
+    let x = sun.x + Math.cos(angle) * distance;
+    let y = sun.y + Math.sin(angle) * distance;
+
+    let speed = Math.sqrt(G * sun.mass / distance);
+
+    let vx = -Math.sin(angle) * speed;
+    let vy = Math.cos(angle) * speed;
+
+    let planet = new Body(x, y, vx, vy, model.mass, model.radius, "planet", model.name, model);
+    bodies.push(planet);
+
+    if (withMoons) {
+        let moonCount = Math.max(1, model.moons);
+        for (let i = 0; i < moonCount; i++) {
+            bodies.push(createMoon(planet, i + 1));
+        }
+    }
+}
+
+function spawnSelectedPlanet(withMoons) {
+    const selected = document.getElementById("planetSelect").value;
+    spawnPlanet(withMoons, selected);
+}
+
+function spawnAllPlanets() {
+    Object.keys(PLANET_MODELS).forEach((planetKey) => {
+        spawnPlanet(true, planetKey);
+    });
+}
+
+/* -------- BLACK HOLE -------- */
+function spawnBlackHole() {
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+
+    bodies.push(new Body(x,y,0,0,8000,10,"blackhole", "Black Hole"));
+}
+
+/* -------- CLEAR -------- */
+function clearBodies() {
+    bodies = [sun];
+}
+
+/* -------- UPDATE -------- */
+function update() {
+    for (let i=0;i<bodies.length;i++){
+        for (let j=0;j<bodies.length;j++){
+            if(i!==j) applyGravity(bodies[i], bodies[j]);
+        }
+    }
+
+    bodies.forEach(b=>{
+        b.x += b.vx;
+        b.y += b.vy;
+    });
+}
+
+/* -------- DRAW -------- */
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    bodies.forEach(b=>b.draw());
+}
+
+/* -------- LOOP -------- */
+function loop(){
+    if(unlocked && running) update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+
+/* -------- UNLOCK SYSTEM -------- */
+async function hashCode(code){
+    const encoder = new TextEncoder();
+    const data = encoder.encode(code);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+/* PUT YOUR VALID HASHES HERE */
+const validHashes = [\
+    "1892495595a89843cea0de5ba646cd63b82ba418fb2ac76ab36adc880d2f61ff",
+    "0229d07fb8acc463d2f53e227fd5abe94e43d407635c819abaa37d947ac4cf86",
+];
+
+
+async function checkCode(){
+    let input = document.getElementById("codeInput").value.trim();
+    let hashed = await hashCode(input);
+
+    console.log("Input:", input);
+    console.log("Hash:", hashed);
+
+    if(validHashes.includes(hashed)){
+        unlocked = true;
+        document.getElementById("unlockScreen").style.display="none";
+        document.getElementById("ui").style.display="block";
+        document.getElementById("status").innerText = "Unlocked!";
+    } else {
+        document.getElementById("status").innerText = "Wrong code";
+    }
+}
+</script>
+
+</body>
+</html>
