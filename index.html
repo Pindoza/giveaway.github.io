@@ -1,53 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Experiment Lab</title>
+    <title>Solar System Simulator</title>
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
             overflow: hidden;
+            background: black;
+            color: white;
+            font-family: Arial;
         }
 
         #ui {
             position: fixed;
             top: 10px;
             left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 15px;
-            border-radius: 10px;
-            width: 240px;
+            background: rgba(0,0,0,0.6);
+            padding: 10px;
+            border-radius: 8px;
         }
 
-        input, button {
+        button {
             width: 100%;
-            margin-top: 8px;
-        }
-
-        canvas {
-            display: block;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <label>Gravity</label>
-    <input type="range" id="gravity" min="0" max="1" step="0.01" value="0.2">
-
-    <label>Particle Size</label>
-    <input type="range" id="size" min="2" max="12" value="5">
-
-    <label>Particle Count</label>
-    <input type="number" id="count" value="50">
-
-    <label>Color</label>
-    <input type="color" id="color" value="#00ffcc">
-
-    <button onclick="spawnParticles()">Spawn Particles</button>
-    <button onclick="clearParticles()">Reset</button>
+    <button onclick="spawnPlanet()">Spawn Planet</button>
+    <button onclick="spawnBlackHole()">Spawn Black Hole</button>
+    <button onclick="resetSim()">Reset</button>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -59,68 +43,137 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let particles = [];
+const G = 0.05; // gravitational constant (tunable)
 
-const gravitySlider = document.getElementById("gravity");
-const sizeSlider = document.getElementById("size");
-const countInput = document.getElementById("count");
-const colorPicker = document.getElementById("color");
+let bodies = [];
 
-class Particle {
-    constructor(x, y) {
+// central star
+bodies.push({
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    vx: 0,
+    vy: 0,
+    mass: 20000,
+    radius: 20,
+    type: "star"
+});
+
+class Body {
+    constructor(x, y, vx, vy, mass, radius, type) {
         this.x = x;
         this.y = y;
-
-        this.vx = (Math.random() - 0.5) * 6;
-        this.vy = (Math.random() - 0.5) * 6;
-
-        this.size = parseInt(sizeSlider.value);
-        this.color = colorPicker.value;
+        this.vx = vx;
+        this.vy = vy;
+        this.mass = mass;
+        this.radius = radius;
+        this.type = type;
     }
 
     update() {
-        this.vy += parseFloat(gravitySlider.value);
+        let ax = 0;
+        let ay = 0;
+
+        for (let other of bodies) {
+            if (other === this) continue;
+
+            let dx = other.x - this.x;
+            let dy = other.y - this.y;
+
+            let distSq = dx * dx + dy * dy;
+            let dist = Math.sqrt(distSq) || 1;
+
+            // gravitational force
+            let force = (G * this.mass * other.mass) / distSq;
+
+            // acceleration
+            ax += (force * dx / dist) / this.mass;
+            ay += (force * dy / dist) / this.mass;
+
+            // collision / absorption
+            if (dist < this.radius + other.radius) {
+                if (other.type === "blackhole" && this.type !== "blackhole") {
+                    // absorbed by black hole
+                    this.mass = 0;
+                }
+            }
+        }
+
+        this.vx += ax;
+        this.vy += ay;
 
         this.x += this.vx;
         this.y += this.vy;
-
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
     }
 
     draw() {
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
+
+        if (this.type === "star") {
+            ctx.fillStyle = "yellow";
+        } else if (this.type === "blackhole") {
+            ctx.fillStyle = "white";
+        } else {
+            ctx.fillStyle = "cyan";
+        }
+
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
     }
 }
 
-function spawnParticles() {
-    let count = parseInt(countInput.value);
+function spawnPlanet() {
+    let center = bodies[0];
 
-    for (let i = 0; i < count; i++) {
-        let x = canvas.width / 2;
-        let y = canvas.height / 2;
-        particles.push(new Particle(x, y));
-    }
+    let distance = 100 + Math.random() * 200;
+    let angle = Math.random() * Math.PI * 2;
+
+    let x = center.x + Math.cos(angle) * distance;
+    let y = center.y + Math.sin(angle) * distance;
+
+    // orbital velocity approximation
+    let speed = Math.sqrt(G * center.mass / distance);
+
+    let vx = -Math.sin(angle) * speed;
+    let vy = Math.cos(angle) * speed;
+
+    let mass = 5 + Math.random() * 10;
+
+    bodies.push(new Body(x, y, vx, vy, mass, 4, "planet"));
 }
 
-function clearParticles() {
-    particles = [];
+function spawnBlackHole() {
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+
+    bodies.push(new Body(x, y, 0, 0, 50000, 8, "blackhole"));
 }
 
-// initial spawn
-spawnParticles();
+function resetSim() {
+    bodies = [];
+
+    bodies.push({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: 0,
+        vy: 0,
+        mass: 20000,
+        radius: 20,
+        type: "star"
+    });
+}
 
 function animate() {
-    ctx.fillStyle = "rgba(15, 23, 42, 0.25)";
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    particles.forEach(p => {
-        p.update();
-        p.draw();
-    });
+    for (let b of bodies) {
+        if (b.mass === 0) continue;
+
+        if (b instanceof Body) {
+            b.update();
+        }
+        if (b.draw) b.draw();
+    }
 
     requestAnimationFrame(animate);
 }
