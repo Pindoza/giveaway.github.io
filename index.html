@@ -264,24 +264,9 @@ async function checkCode(){
 <div id="ui">
     <div class="panelTitle">Solar Controls</div>
 
-    <div class="controlRow">
-        <label for="planetSelect">Planet:</label>
-        <select id="planetSelect" onchange="updateSelectedPlanetLabel()">
-            <option value="mercury">Mercury</option>
-            <option value="venus">Venus</option>
-            <option value="earth" selected>Earth</option>
-            <option value="mars">Mars</option>
-            <option value="jupiter">Jupiter</option>
-            <option value="saturn">Saturn</option>
-            <option value="uranus">Uranus</option>
-            <option value="neptune">Neptune</option>
-        </select>
-    </div>
-    <p id="selectionStatus"></p>
-
     <div class="controlRow buttons">
-        <button type="button" onclick="spawnSelectedPlanet(true)">Selected + Moons</button>
-        <button type="button" onclick="spawnSelectedPlanet(false)">Selected (no moons)</button>
+        <button type="button" onclick="openPlanetPicker(true)">Planet + Moons</button>
+        <button type="button" onclick="openPlanetPicker(false)">Planet (no moons)</button>
         <button type="button" onclick="spawnAllPlanets()">Spawn Full Solar Set</button>
     </div>
 
@@ -289,6 +274,24 @@ async function checkCode(){
         <button type="button" onclick="spawnBlackHole()">Black Hole</button>
         <button type="button" onclick="clearBodies()">Clear</button>
         <button type="button" onclick="running=!running">Start/Stop</button>
+    </div>
+</div>
+
+<div id="planetPicker" class="hidden">
+    <div id="planetPickerBox">
+        <h3>Select a planet</h3>
+        <p id="pickerMode"></p>
+        <div class="planetGrid">
+            <button type="button" onclick="choosePlanet('mercury')">Mercury</button>
+            <button type="button" onclick="choosePlanet('venus')">Venus</button>
+            <button type="button" onclick="choosePlanet('earth')">Earth</button>
+            <button type="button" onclick="choosePlanet('mars')">Mars</button>
+            <button type="button" onclick="choosePlanet('jupiter')">Jupiter</button>
+            <button type="button" onclick="choosePlanet('saturn')">Saturn</button>
+            <button type="button" onclick="choosePlanet('uranus')">Uranus</button>
+            <button type="button" onclick="choosePlanet('neptune')">Neptune</button>
+        </div>
+        <button type="button" onclick="closePlanetPicker()">Cancel</button>
     </div>
 </div>
 
@@ -303,6 +306,7 @@ canvas.height = window.innerHeight;
 
 let running = true;
 let unlocked = false;
+let pendingPlanetSpawnWithMoons = false;
 
 const G = 0.2;
 
@@ -476,6 +480,8 @@ function createMoon(planet, index = 1) {
 
 /* -------- PLANET -------- */
 function spawnPlanet(withMoons, planetKey = "earth") {
+    if (!sun || !bodies.includes(sun)) return;
+
     const model = PLANET_MODELS[planetKey] || PLANET_MODELS.earth;
 
     let distance = model.orbitalDistance + (Math.random() * 20 - 10);
@@ -500,12 +506,25 @@ function spawnPlanet(withMoons, planetKey = "earth") {
     }
 }
 
-function spawnSelectedPlanet(withMoons) {
-    const selected = getSelectedPlanetKey();
-    spawnPlanet(withMoons, selected);
+function openPlanetPicker(withMoons) {
+    pendingPlanetSpawnWithMoons = withMoons;
+    document.getElementById("pickerMode").innerText = withMoons
+        ? "Mode: Planet + moons"
+        : "Mode: Planet without moons";
+    document.getElementById("planetPicker").classList.remove("hidden");
+}
+
+function closePlanetPicker() {
+    document.getElementById("planetPicker").classList.add("hidden");
+}
+
+function choosePlanet(planetKey) {
+    spawnPlanet(pendingPlanetSpawnWithMoons, planetKey);
+    closePlanetPicker();
 }
 
 function spawnAllPlanets() {
+    if (!sun || !bodies.includes(sun)) return;
     Object.keys(PLANET_MODELS).forEach((planetKey) => {
         spawnPlanet(true, planetKey);
     });
@@ -521,20 +540,7 @@ function spawnBlackHole() {
 
 /* -------- CLEAR -------- */
 function clearBodies() {
-    bodies = [sun];
-}
-
-function getSelectedPlanetKey() {
-    const select = document.getElementById("planetSelect");
-    const selected = select?.value || "earth";
-    if (!PLANET_MODELS[selected]) return "earth";
-    return selected;
-}
-
-function updateSelectedPlanetLabel() {
-    const selected = getSelectedPlanetKey();
-    const selectedPlanet = PLANET_MODELS[selected];
-    document.getElementById("selectionStatus").innerText = `Selected planet: ${selectedPlanet.name}`;
+    bodies = sun && bodies.includes(sun) ? [sun] : [];
 }
 
 /* -------- UPDATE -------- */
@@ -556,9 +562,45 @@ function update() {
         }
     }
 
+    handleBlackHoleFeeding();
+
     bodies.forEach(b=>{
         b.x += b.vx;
         b.y += b.vy;
+    });
+}
+
+function handleBlackHoleFeeding() {
+    const blackHoles = bodies.filter((b) => b.type === "blackhole");
+    if (!blackHoles.length) return;
+
+    blackHoles.forEach((blackHole) => {
+        for (let i = bodies.length - 1; i >= 0; i--) {
+            const target = bodies[i];
+            if (target === blackHole || target.type === "blackhole") continue;
+
+            const dx = blackHole.x - target.x;
+            const dy = blackHole.y - target.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) + 0.1;
+            const influenceRadius = blackHole.radius * 9;
+            if (dist > influenceRadius) continue;
+
+            const baseDrain = Math.max(0.01, blackHole.mass * 0.00004);
+            const proximityBoost = Math.max(1, influenceRadius / dist);
+            const drain = Math.min(target.mass * 0.03, baseDrain * proximityBoost);
+            target.mass -= drain;
+            blackHole.mass += drain * 0.92;
+
+            target.radius = Math.max(0.8, Math.sqrt(Math.max(target.mass, 0.1)));
+            blackHole.radius = Math.min(140, Math.sqrt(blackHole.mass) * 0.11);
+
+            if (target.mass <= 0.8 || target.radius <= 1) {
+                if (target === sun) {
+                    sun = null;
+                }
+                bodies.splice(i, 1);
+            }
+        }
     });
 }
 
@@ -575,7 +617,6 @@ function loop(){
     requestAnimationFrame(loop);
 }
 loop();
-updateSelectedPlanetLabel();
 
 /* -------- UNLOCK SYSTEM -------- */
 async function hashCode(code){
