@@ -185,15 +185,23 @@ class Body {
     }
 
     draw() {
-        ctx.beginPath();
-        if (this.type === "blackhole") {
-            ctx.fillStyle = "white";
-        } else {
-            ctx.fillStyle = "cyan";
-        }
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
+    ctx.beginPath();
+
+    if (this.type === "star") {
+        ctx.fillStyle = "yellow";
+    } else if (this.type === "blackhole") {
+        ctx.fillStyle = "white";
+    } else {
+        ctx.fillStyle = this.color || "cyan";
     }
+
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+}
+}
+
+function getRandomColor() {
+    return `hsl(${Math.random() * 360}, 80%, 60%)`;
 }
 
 function spawnPlanet() {
@@ -210,7 +218,10 @@ function spawnPlanet() {
     let vx = -Math.sin(angle) * speed;
     let vy = Math.cos(angle) * speed;
 
-    bodies.push(new Body(x, y, vx, vy, 8, 4, "planet"));
+    let planet = new Body(x, y, vx, vy, 8, 4, "planet");
+    planet.color = getRandomColor();
+
+    bodies.push(planet);
 }
 
 function spawnBlackHole() {
