@@ -58,7 +58,8 @@ function startHack() {
         if (validCodes.includes(code)) {
             stopBeep();
             document.getElementById("success").play();
-            typeText("ACCESS - GRANTED ✅", result);
+            typeText("ACCESS - GRANTED ✅");
+            window.location.href = "game.html";
             downloads.style.display = "block";
         } else {
             stopBeep();
