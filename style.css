@@ -282,3 +282,25 @@ body::after {
         opacity: 1;
     }
 }
+#gameArea {
+    width: 600px;
+    height: 400px;
+    background: #111;
+    border: 2px solid #00ffcc;
+    position: relative;
+    margin: 20px auto;
+}
+
+#target {
+    width: 40px;
+    height: 40px;
+    background: red;
+    border-radius: 50%;
+    position: absolute;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#target:hover {
+    transform: scale(1.2);
+}
