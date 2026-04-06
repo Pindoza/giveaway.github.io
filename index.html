@@ -6,68 +6,57 @@
 </head>
 <body>
 
+<!-- particles background -->
+<div class="particles"></div>
+
 <div class="box">
     <h2 class="glitch" data-text="ACCESS TERMINAL">ACCESS TERMINAL</h2>
 
     <input type="text" id="codeInput" placeholder="Enter code">
     <button onclick="startHack()">EXECUTE</button>
 
-    <p id="result"></p>
     <p id="typing"></p>
-
-    <div id="downloads" style="display:none; margin-top:20px;">
-        <h3>📦 FILES UNLOCKED:</h3>
-
-        <div class="item">
-            <span>💭Add echo to files</span>
-            <button onclick="downloadFile('files/AddEcho.zip')">Download</button>
-        </div>
-
-        <div class="item">
-            <span>💻 broOS (WSL and QEMU required!)</span>
-            <button onclick="downloadFile('files/broOS (WSL required!).zip')">Download</button>
-        </div>
-
-        <div class="item">
-            <span>🌐fake Steam in Python</span>
-            <button onclick="downloadFile('files/fake Steam in Python.zip')">Download</button>
-        </div>
-    </div>
+    <p id="result"></p>
 </div>
 
+<!-- sounds -->
 <audio id="beep" src="https://www.soundjay.com/button/beep-07.wav"></audio>
 <audio id="success" src="https://www.soundjay.com/misc/success.wav"></audio>
 
 <script>
-const validCodes = ["WIELKANOC2026", "SMIGUSDYNGUS", "Discord", "Nagrody"];
+const validCodes = ["1234", "secret", "unlock"];
 
+// start hacking animation
 function startHack() {
-    let code = document.getElementById("codeInput").value;
+    let code = document.getElementById("codeInput").value.toLowerCase();
     let result = document.getElementById("result");
     let typing = document.getElementById("typing");
-    let downloads = document.getElementById("downloads");
 
     result.innerText = "";
-    downloads.style.display = "none";
+    typing.innerText = "";
 
-    typeText("Decrypting - files...", typing);
-
+    typeText("Decrypting files...", typing);
     playBeepLoop();
 
     setTimeout(() => {
+        stopBeep();
+
         if (validCodes.includes(code)) {
-            stopBeep();
             document.getElementById("success").play();
-            typeText("ACCESS - GRANTED ✅");
-            window.location.href = "game.html";
-            downloads.style.display = "block";
+            typeText("ACCESS GRANTED 😎", result);
+
+            // redirect to game after short delay
+            setTimeout(() => {
+                window.location.href = "game.html";
+            }, 1500);
+
         } else {
-            stopBeep();
-            typeText("ACCESS - DENIED ❌", result);
+            typeText("ACCESS DENIED 💀", result);
         }
     }, 3000);
 }
 
+// typing effect
 function typeText(text, element) {
     element.innerText = "";
     let i = 0;
@@ -76,13 +65,15 @@ function typeText(text, element) {
         element.innerText += text[i];
         i++;
         if (i >= text.length) clearInterval(interval);
-    }, 50);
+    }, 40);
 }
 
+// download (not used here but you can reuse)
 function downloadFile(path) {
     window.location.href = path;
 }
 
+// beep loop
 let beepInterval;
 
 function playBeepLoop() {
@@ -96,6 +87,24 @@ function playBeepLoop() {
 function stopBeep() {
     clearInterval(beepInterval);
 }
+
+// particle generator
+function createParticles() {
+    const container = document.querySelector(".particles");
+
+    for (let i = 0; i < 40; i++) {
+        let p = document.createElement("div");
+        p.className = "particle";
+
+        p.style.left = Math.random() * 100 + "vw";
+        p.style.animationDuration = (5 + Math.random() * 10) + "s";
+        p.style.opacity = Math.random();
+
+        container.appendChild(p);
+    }
+}
+
+createParticles();
 </script>
 
 </body>
