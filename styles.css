@@ -117,12 +117,6 @@ button:hover {
     color: #bae6fd;
 }
 
-#selectionStatus {
-    margin: 4px 0 8px;
-    color: #dbeafe;
-    font-size: 13px;
-}
-
 #stars {
     position: fixed;
     width: 100%;
@@ -143,4 +137,40 @@ button:hover {
     0% { opacity: 0.2; }
     50% { opacity: 1; }
     100% { opacity: 0.2; }
+}
+
+#planetPicker {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9;
+}
+
+#planetPicker.hidden {
+    display: none;
+}
+
+#planetPickerBox {
+    width: min(520px, calc(100vw - 32px));
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(125, 211, 252, 0.8);
+    background: rgba(15, 23, 42, 0.96);
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
+    text-align: center;
+}
+
+#pickerMode {
+    margin-top: 0;
+    color: #bfdbfe;
+}
+
+.planetGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 10px 0 14px;
 }
