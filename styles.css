@@ -1,6 +1,6 @@
 body {
     margin: 0;
-    overflow: hidden;
+    font-family: Arial;
     background: radial-gradient(circle at top, #081229, #02050f 65%, #000);
     font-family: Arial, sans-serif;
     color: #fff;
