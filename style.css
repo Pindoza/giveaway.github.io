@@ -304,3 +304,11 @@ body::after {
 #target:hover {
     transform: scale(1.2);
 }
+.setup {
+    margin-bottom: 20px;
+}
+
+.setup input {
+    width: 60px;
+    margin: 5px;
+}
