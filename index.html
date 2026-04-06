@@ -256,7 +256,7 @@ async function checkCode(){
         <h2>Enter Access Code</h2>
         <input id="codeInput" placeholder="code">
         <br><br>
-        <button onclick="checkCode()">Unlock</button>
+        <button type="button" onclick="checkCode()">Unlock</button>
         <p id="status"></p>
     </div>
 </div>
@@ -279,15 +279,15 @@ async function checkCode(){
     </div>
 
     <div class="controlRow buttons">
-        <button onclick="spawnSelectedPlanet(true)">Selected + Moons</button>
-        <button onclick="spawnSelectedPlanet(false)">Selected (no moons)</button>
-        <button onclick="spawnAllPlanets()">Spawn Full Solar Set</button>
+        <button type="button" onclick="spawnSelectedPlanet(true)">Selected + Moons</button>
+        <button type="button" onclick="spawnSelectedPlanet(false)">Selected (no moons)</button>
+        <button type="button" onclick="spawnAllPlanets()">Spawn Full Solar Set</button>
     </div>
 
     <div class="controlRow buttons">
-        <button onclick="spawnBlackHole()">Black Hole</button>
-        <button onclick="clearBodies()">Clear</button>
-        <button onclick="running=!running">Start/Stop</button>
+        <button type="button" onclick="spawnBlackHole()">Black Hole</button>
+        <button type="button" onclick="clearBodies()">Clear</button>
+        <button type="button" onclick="running=!running">Start/Stop</button>
     </div>
 </div>
 
@@ -329,6 +329,13 @@ function generateStars() {
     }
 }
 generateStars();
+
+const unlockLayers = document.querySelectorAll("#unlockScreen");
+if (unlockLayers.length > 1) {
+    unlockLayers.forEach((layer, index) => {
+        if (index > 0) layer.remove();
+    });
+}
 
 /* -------- BODY -------- */
 class Body {
@@ -544,20 +551,28 @@ async function hashCode(code){
 }
 
 /* PUT YOUR VALID HASHES HERE */
-const validHashes = [\
+const validHashes = [
     "1892495595a89843cea0de5ba646cd63b82ba418fb2ac76ab36adc880d2f61ff",
     "0229d07fb8acc463d2f53e227fd5abe94e43d407635c819abaa37d947ac4cf86",
 ];
 
 
 async function checkCode(){
+    if (unlocked) return;
+
     let input = document.getElementById("codeInput").value.trim();
-    let hashed = await hashCode(input);
+    if (!input) {
+        document.getElementById("status").innerText = "Please enter a code";
+        return;
+    }
+
+    const candidateInputs = [input, input.toLowerCase(), input.toUpperCase()];
+    const hashes = await Promise.all(candidateInputs.map(hashCode));
 
     console.log("Input:", input);
-    console.log("Hash:", hashed);
+    console.log("Hash candidates:", hashes);
 
-    if(validHashes.includes(hashed)){
+    if(hashes.some((hashed) => validHashes.includes(hashed))){
         unlocked = true;
         document.getElementById("unlockScreen").style.display="none";
         document.getElementById("ui").style.display="block";
